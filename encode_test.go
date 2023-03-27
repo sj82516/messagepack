@@ -139,6 +139,23 @@ var uintTestCases = []testCase{
         exp:  []byte{0xcf, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
     },
 }
+var floatTestCases = []testCase{
+    {
+        dest: "float",
+        src:  float32(0),
+        exp:  []byte{0xca, 0x00, 0x00, 0x00, 0x00},
+    },
+    {
+        dest: "float",
+        src:  float32(0.1),
+        exp:  []byte{0xca, 0x3d, 0xcc, 0xcc, 0xcd},
+    },
+    {
+        dest: "float",
+        src:  float64(0.1),
+        exp:  []byte{0xcb, 0x3f, 0xb9, 0x99, 0x99, 0x99, 0x99, 0x99, 0x9a},
+    },
+}
 
 func TestEncode(t *testing.T) {
     var tests []testCase
@@ -146,6 +163,7 @@ func TestEncode(t *testing.T) {
     tests = append(tests, boolTestCases...)
     tests = append(tests, intTestCases...)
     tests = append(tests, uintTestCases...)
+    tests = append(tests, floatTestCases...)
     
     for _, v := range tests {
         if act, err := Encode(v.src); err != nil {

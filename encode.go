@@ -2,6 +2,7 @@ package msgpack
 
 import (
     "errors"
+    "math"
     "reflect"
 )
 
@@ -15,6 +16,7 @@ func Encode(v interface{}) ([]byte, error) {
         encodeBool,
         encodeInt,
         encodeUint,
+        encodeFloat,
     }
     
     for _, encoder := range encoderCh {
@@ -95,4 +97,34 @@ func encodeUint(v interface{}) ([]byte, error) {
     }
     
     return nil, errors.New("out of range")
+}
+
+// https://github.com/msgpack/msgpack/blob/master/spec.md#float-format-family
+func encodeFloat(v interface{}) ([]byte, error) {
+    if reflect.TypeOf(v).Kind() != reflect.Float32 &&
+        reflect.TypeOf(v).Kind() != reflect.Float64 {
+        return nil, nil
+    }
+    
+    switch v.(type) {
+    case float32:
+        x := v.(float32)
+        bits := math.Float32bits(x)
+        bytes := make([]byte, 4)
+        for i := 0; i < 4; i++ {
+            bytes[3-i] = byte(bits >> uint(8*i))
+        }
+        bytes = append([]byte{0xca}, bytes...)
+        return bytes, nil
+    case float64:
+        x := v.(float64)
+        bits := math.Float64bits(x)
+        bytes := make([]byte, 8)
+        for i := 0; i < 8; i++ {
+            bytes[7-i] = byte(bits >> uint(8*i))
+        }
+        bytes = append([]byte{0xcb}, bytes...)
+        return bytes, nil
+    }
+    return nil, nil
 }
