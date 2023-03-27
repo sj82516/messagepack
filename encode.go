@@ -30,7 +30,7 @@ func Encode(v interface{}) ([]byte, error) {
     return nil, nil
 }
 
-// nil
+// https://github.com/msgpack/msgpack/blob/master/spec.md#nil-format
 func encodeNil(v interface{}) ([]byte, error) {
     if v != nil {
         return nil, nil
@@ -39,7 +39,7 @@ func encodeNil(v interface{}) ([]byte, error) {
     return []byte{0xc0}, nil
 }
 
-// bool
+// https://github.com/msgpack/msgpack/blob/master/spec.md#bool-format-family
 func encodeBool(v interface{}) ([]byte, error) {
     if t, ok := v.(bool); !ok {
         return nil, nil
