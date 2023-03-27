@@ -90,7 +90,7 @@ func encodeUint(v interface{}) ([]byte, error) {
     if uInt < 4294967296 {
         return []byte{0xce, byte(uInt >> 24), byte(uInt >> 16), byte(uInt >> 8), byte(uInt)}, nil
     }
-    if uInt < 18446744073709551615 {
+    if uInt <= 18446744073709551615 {
         return []byte{0xcf, byte(uInt >> 56), byte(uInt >> 48), byte(uInt >> 40), byte(uInt >> 32), byte(uInt >> 24), byte(uInt >> 16), byte(uInt >> 8), byte(uInt)}, nil
     }
     
