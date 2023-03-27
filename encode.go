@@ -17,6 +17,7 @@ func Encode(v interface{}) ([]byte, error) {
         encodeInt,
         encodeUint,
         encodeFloat,
+        encodeStr,
     }
     
     for _, encoder := range encoderCh {
@@ -147,4 +148,28 @@ func encodeFloat(v interface{}) ([]byte, error) {
         return bytes, nil
     }
     return nil, nil
+}
+
+// https://github.com/msgpack/msgpack/blob/master/spec.md#str-format-family
+func encodeStr(v interface{}) ([]byte, error) {
+    if reflect.TypeOf(v).Kind() != reflect.String {
+        return nil, nil
+    }
+    
+    s := v.(string)
+    head := []byte{}
+    bytes := []byte(s)
+    if len(s) < 32 {
+        head = []byte{0xa0 + byte(len(s))}
+    } else if len(s) < 256 {
+        head = []byte{0xd9, byte(len(s))}
+    } else if len(s) < 65536 {
+        head = []byte{0xda, byte(len(s) >> 8), byte(len(s))}
+    } else if len(s) < 4294967296 {
+        head = []byte{0xdb, byte(len(s) >> 24), byte(len(s) >> 16), byte(len(s) >> 8), byte(len(s))}
+    } else {
+        return nil, errors.New("out of range")
+    }
+    
+    return append(head, bytes...), nil
 }

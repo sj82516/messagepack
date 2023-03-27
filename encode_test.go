@@ -2,6 +2,7 @@ package msgpack
 
 import (
     "bytes"
+    "strings"
     "testing"
 )
 
@@ -208,6 +209,48 @@ var floatTestCases = []testCase{
         exp:  []byte{0xcb, 0x3f, 0xb9, 0x99, 0x99, 0x99, 0x99, 0x99, 0x9a},
     },
 }
+var strTestCases = []testCase{
+    {
+        dest: "string",
+        src:  "",
+        exp:  []byte{0xa0},
+    },
+    {
+        dest: "string",
+        src:  "a",
+        exp:  []byte{0xa1, 0x61},
+    },
+    {
+        dest: "string",
+        src:  "abc",
+        exp:  []byte{0xa3, 0x61, 0x62, 0x63},
+    },
+    {
+        dest: "string",
+        src:  "Hello World!",
+        exp:  []byte{0xac, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64, 0x21},
+    },
+    {
+        dest: "string",
+        src:  strings.Repeat("b", 32),
+        exp:  append([]byte{0xd9, 0x20}, []byte(strings.Repeat("b", 32))...),
+    },
+    {
+        dest: "string",
+        src:  strings.Repeat("c", 256),
+        exp:  append([]byte{0xda, 0x01, 0x00}, []byte(strings.Repeat("c", 256))...),
+    },
+    {
+        dest: "string",
+        src:  strings.Repeat("d", 65536),
+        exp:  append([]byte{0xdb, 0x00, 0x01, 0x00, 0x00}, []byte(strings.Repeat("d", 65536))...),
+    },
+    {
+        dest: "string",
+        src:  "你好",
+        exp:  []byte{0xa6, 0xe4, 0xbd, 0xa0, 0xe5, 0xa5, 0xbd},
+    },
+}
 
 func TestEncode(t *testing.T) {
     var tests []testCase
@@ -217,6 +260,7 @@ func TestEncode(t *testing.T) {
     tests = append(tests, uintTestCases...)
     tests = append(tests, negIntTestCases...)
     tests = append(tests, floatTestCases...)
+    tests = append(tests, strTestCases...)
     
     for _, v := range tests {
         if act, err := Encode(v.src); err != nil {
