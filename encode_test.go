@@ -26,6 +26,56 @@ func TestEncode(t *testing.T) {
             src:  false,
             exp:  []byte{0xc2},
         },
+        {
+            dest: "int",
+            src:  0,
+            exp:  []byte{0x00},
+        },
+        {
+            dest: "int",
+            src:  1,
+            exp:  []byte{0x01},
+        },
+        {
+            dest: "int",
+            src:  127,
+            exp:  []byte{0x7f},
+        },
+        {
+            dest: "int",
+            src:  128,
+            exp:  []byte{0xcc, 0x80},
+        },
+        {
+            dest: "int",
+            src:  255,
+            exp:  []byte{0xcc, 0xff},
+        },
+        {
+            dest: "int",
+            src:  256,
+            exp:  []byte{0xcd, 0x01, 0x00},
+        },
+        {
+            dest: "int",
+            src:  65535,
+            exp:  []byte{0xcd, 0xff, 0xff},
+        },
+        {
+            dest: "int",
+            src:  65536,
+            exp:  []byte{0xce, 0x00, 0x01, 0x00, 0x00},
+        },
+        {
+            dest: "int",
+            src:  4294967295,
+            exp:  []byte{0xce, 0xff, 0xff, 0xff, 0xff},
+        },
+        {
+            dest: "int",
+            src:  4294967296,
+            exp:  []byte{0xcf, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00},
+        },
     }
     
     for _, v := range test {
