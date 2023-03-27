@@ -18,6 +18,7 @@ func Encode(v interface{}) ([]byte, error) {
         encodeUint,
         encodeFloat,
         encodeStr,
+        encodeArr,
     }
     
     for _, encoder := range encoderCh {
@@ -172,4 +173,34 @@ func encodeStr(v interface{}) ([]byte, error) {
     }
     
     return append(head, bytes...), nil
+}
+
+// https://github.com/msgpack/msgpack/blob/master/spec.md#array-format-family
+func encodeArr(v interface{}) ([]byte, error) {
+    if reflect.TypeOf(v).Kind() != reflect.Slice {
+        return nil, nil
+    }
+    
+    s := reflect.ValueOf(v)
+    head := []byte{}
+    if s.Len() < 16 {
+        head = []byte{0x90 + byte(s.Len())}
+    } else if s.Len() < 65536 {
+        head = []byte{0xdc, byte(s.Len() >> 8), byte(s.Len())}
+    } else if s.Len() < 4294967296 {
+        head = []byte{0xdd, byte(s.Len() >> 24), byte(s.Len() >> 16), byte(s.Len() >> 8), byte(s.Len())}
+    } else {
+        return nil, errors.New("out of range")
+    }
+    
+    body := []byte{}
+    for i := 0; i < s.Len(); i++ {
+        b, err := Encode(s.Index(i).Interface())
+        if err != nil {
+            return nil, err
+        }
+        body = append(body, b...)
+    }
+    
+    return append(head, body...), nil
 }

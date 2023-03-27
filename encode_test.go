@@ -7,9 +7,10 @@ import (
 )
 
 type testCase struct {
-    dest string
-    src  interface{}
-    exp  []byte
+    dest    string
+    src     interface{}
+    expFunc func() []byte
+    exp     []byte
 }
 
 var nilTestCases = []testCase{
@@ -251,6 +252,58 @@ var strTestCases = []testCase{
         exp:  []byte{0xa6, 0xe4, 0xbd, 0xa0, 0xe5, 0xa5, 0xbd},
     },
 }
+var arrTestCases = []testCase{
+    {
+        dest: "array",
+        src:  []interface{}{},
+        exp:  []byte{0x90},
+    },
+    {
+        dest: "array",
+        src:  []interface{}{1, 2, 3},
+        exp:  []byte{0x93, 0x01, 0x02, 0x03},
+    },
+    {
+        dest: "array",
+        src:  []interface{}{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+        exp:  []byte{0xdc, 0x00, 0x10, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10},
+    },
+    {
+        dest: "array",
+        src:  []interface{}{1, 2, 3, "Hello World!"},
+        exp:  []byte{0x94, 0x01, 0x02, 0x03, 0xac, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64, 0x21},
+    },
+    {
+        dest: "array",
+        src:  []interface{}{1, 2, 3, "Hello World!", []interface{}{1, 2, 3}},
+        exp:  []byte{0x95, 0x01, 0x02, 0x03, 0xac, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64, 0x21, 0x93, 0x01, 0x02, 0x03},
+    },
+    {
+        dest: "array",
+        src:  strings.Split(strings.Repeat("a", 100), ""),
+        expFunc: func() []byte {
+            var strA, _ = encodeStr("a")
+            var bytes []byte
+            bytes = append(bytes, 0xdc, 0x00, 0x64)
+            for i := 0; i < 100; i++ {
+                bytes = append(bytes, strA...)
+            }
+            return bytes
+        },
+    }, {
+        dest: "array",
+        src:  strings.Split(strings.Repeat("a", 65536), ""),
+        expFunc: func() []byte {
+            var strA, _ = encodeStr("a")
+            var bytes []byte
+            bytes = append(bytes, 0xdd, 0x00, 0x01, 0x00, 0x00)
+            for i := 0; i < 65536; i++ {
+                bytes = append(bytes, strA...)
+            }
+            return bytes
+        },
+    },
+}
 
 func TestEncode(t *testing.T) {
     var tests []testCase
@@ -261,12 +314,19 @@ func TestEncode(t *testing.T) {
     tests = append(tests, negIntTestCases...)
     tests = append(tests, floatTestCases...)
     tests = append(tests, strTestCases...)
+    tests = append(tests, arrTestCases...)
     
     for _, v := range tests {
-        if act, err := Encode(v.src); err != nil {
+        act, err := Encode(v.src)
+        exp := v.exp
+        if v.expFunc != nil {
+            exp = v.expFunc()
+        }
+        
+        if err != nil {
             t.Errorf("Error: %s", err)
-        } else if !bytes.Equal(act, v.exp) {
-            t.Errorf("Expected %v, got %v", v.exp, act)
+        } else if !bytes.Equal(act, exp) {
+            t.Errorf("Expected %v, got %v", exp, act)
         }
     }
 }
