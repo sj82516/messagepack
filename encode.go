@@ -67,7 +67,7 @@ func encodeInt(v interface{}) ([]byte, error) {
         uI := uint(i)
         return encodeUint(uI)
     }
-    return nil, nil
+    return encodeNegInt(i)
 }
 
 func encodeUint(v interface{}) ([]byte, error) {
@@ -97,6 +97,26 @@ func encodeUint(v interface{}) ([]byte, error) {
     }
     
     return nil, errors.New("out of range")
+}
+
+func encodeNegInt(v interface{}) ([]byte, error) {
+    nI := v.(int)
+    if nI >= -32 {
+        return []byte{byte(nI)}, nil
+    }
+    if nI >= -128 {
+        return []byte{0xd0, byte(nI)}, nil
+    }
+    if nI >= -32768 {
+        return []byte{0xd1, byte(nI >> 8), byte(nI)}, nil
+    }
+    if nI >= -2147483648 {
+        return []byte{0xd2, byte(nI >> 24), byte(nI >> 16), byte(nI >> 8), byte(nI)}, nil
+    }
+    if nI >= -9223372036854775808 {
+        return []byte{0xd3, byte(nI >> 56), byte(nI >> 48), byte(nI >> 40), byte(nI >> 32), byte(nI >> 24), byte(nI >> 16), byte(nI >> 8), byte(nI)}, nil
+    }
+    return nil, nil
 }
 
 // https://github.com/msgpack/msgpack/blob/master/spec.md#float-format-family

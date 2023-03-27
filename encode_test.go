@@ -139,6 +139,58 @@ var uintTestCases = []testCase{
         exp:  []byte{0xcf, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
     },
 }
+var negIntTestCases = []testCase{
+    {
+        dest: "negative int",
+        src:  -1,
+        exp:  []byte{0xff},
+    },
+    {
+        dest: "negative int",
+        src:  -32,
+        exp:  []byte{0xe0},
+    },
+    {
+        dest: "negative int",
+        src:  -33,
+        exp:  []byte{0xd0, 0xdf},
+    },
+    {
+        dest: "negative int",
+        src:  -128,
+        exp:  []byte{0xd0, 0x80},
+    },
+    {
+        dest: "negative int",
+        src:  -129,
+        exp:  []byte{0xd1, 0xff, 0x7f},
+    },
+    {
+        dest: "negative int",
+        src:  -32768,
+        exp:  []byte{0xd1, 0x80, 0x00},
+    },
+    {
+        dest: "negative int",
+        src:  -32769,
+        exp:  []byte{0xd2, 0xff, 0xff, 0x7f, 0xff},
+    },
+    {
+        dest: "negative int",
+        src:  -2147483648,
+        exp:  []byte{0xd2, 0x80, 0x00, 0x00, 0x00},
+    },
+    {
+        dest: "negative int",
+        src:  -2147483649,
+        exp:  []byte{0xd3, 0xff, 0xff, 0xff, 0xff, 0x7f, 0xff, 0xff, 0xff},
+    },
+    {
+        dest: "negative int",
+        src:  -9223372036854775808,
+        exp:  []byte{0xd3, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+    },
+}
 var floatTestCases = []testCase{
     {
         dest: "float",
@@ -163,6 +215,7 @@ func TestEncode(t *testing.T) {
     tests = append(tests, boolTestCases...)
     tests = append(tests, intTestCases...)
     tests = append(tests, uintTestCases...)
+    tests = append(tests, negIntTestCases...)
     tests = append(tests, floatTestCases...)
     
     for _, v := range tests {
