@@ -11,6 +11,10 @@ type encoder func(interface{}) ([]byte, error)
 // Encode encodes the given value into messagepack format byte arrays.
 // The value must be a struct, map, slice, or array.
 func Encode(v interface{}) ([]byte, error) {
+    return encode(v)
+}
+
+func encode(v interface{}) ([]byte, error) {
     encoderCh := []encoder{
         encodeNil,
         encodeBool,
@@ -195,7 +199,7 @@ func encodeArr(v interface{}) ([]byte, error) {
     
     body := []byte{}
     for i := 0; i < s.Len(); i++ {
-        b, err := Encode(s.Index(i).Interface())
+        b, err := encode(s.Index(i).Interface())
         if err != nil {
             return nil, err
         }
