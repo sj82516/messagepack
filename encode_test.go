@@ -342,16 +342,21 @@ var binTestCases = []testCase{
 
 func TestEncode(t *testing.T) {
     var tests []testCase
-    tests = append(tests, nilTestCases...)
-    tests = append(tests, boolTestCases...)
-    tests = append(tests, intTestCases...)
-    tests = append(tests, uintTestCases...)
-    tests = append(tests, negIntTestCases...)
-    tests = append(tests, floatTestCases...)
-    tests = append(tests, strTestCases...)
-    tests = append(tests, arrTestCases...)
-    tests = append(tests, mapTestCases...)
-    tests = append(tests, binTestCases...)
+    testCases := [][]testCase{
+        nilTestCases,
+        boolTestCases,
+        intTestCases,
+        uintTestCases,
+        negIntTestCases,
+        floatTestCases,
+        strTestCases,
+        arrTestCases,
+        mapTestCases,
+        binTestCases,
+    }
+    for _, tc := range testCases {
+        tests = append(tests, tc...)
+    }
     
     for _, v := range tests {
         src := v.src
