@@ -213,7 +213,7 @@ func encodeBin(v interface{}) ([]byte, error) {
 
 // https://github.com/msgpack/msgpack/blob/master/spec.md#array-format-family
 func encodeArr(v interface{}) ([]byte, error) {
-    if reflect.TypeOf(v).Kind() != reflect.Slice {
+    if reflect.TypeOf(v).Kind() != reflect.Slice && reflect.TypeOf(v).Kind() != reflect.Array {
         return nil, nil
     }
     

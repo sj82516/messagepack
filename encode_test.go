@@ -304,6 +304,11 @@ var arrTestCases = []testCase{
             return bytes
         },
     },
+    {
+        dest: "array",
+        src:  [3]interface{}{1, 2, 3},
+        exp:  []byte{0x93, 0x01, 0x02, 0x03},
+    },
 }
 var mapTestCases = []testCase{
     {
