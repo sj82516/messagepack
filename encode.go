@@ -7,6 +7,9 @@ import (
     "sort"
 )
 
+// ErrOutOfRange is returned when the size of value is out of range.
+var ErrOutOfRange = errors.New("out of range")
+
 type encoder func(interface{}) ([]byte, error)
 
 // Encode encodes the given value into messagepack format byte arrays.
@@ -105,7 +108,7 @@ func encodeUint(v interface{}) ([]byte, error) {
         return []byte{0xcf, byte(uInt >> 56), byte(uInt >> 48), byte(uInt >> 40), byte(uInt >> 32), byte(uInt >> 24), byte(uInt >> 16), byte(uInt >> 8), byte(uInt)}, nil
     }
     
-    return nil, errors.New("out of range")
+    return nil, ErrOutOfRange
 }
 
 func encodeNegInt(v interface{}) ([]byte, error) {
@@ -176,7 +179,7 @@ func encodeStr(v interface{}) ([]byte, error) {
     } else if len(s) < 4294967296 {
         head = []byte{0xdb, byte(len(s) >> 24), byte(len(s) >> 16), byte(len(s) >> 8), byte(len(s))}
     } else {
-        return nil, errors.New("out of range")
+        return nil, ErrOutOfRange
     }
     
     return append(head, bytes...), nil
@@ -205,7 +208,7 @@ func encodeBin(v interface{}) ([]byte, error) {
     } else if s.Len() < 4294967296 {
         head = []byte{0xc6, byte(s.Len() >> 24), byte(s.Len() >> 16), byte(s.Len() >> 8), byte(s.Len())}
     } else {
-        return nil, errors.New("out of range")
+        return nil, ErrOutOfRange
     }
     
     return append(head, s.Bytes()...), nil
@@ -226,7 +229,7 @@ func encodeArr(v interface{}) ([]byte, error) {
     } else if s.Len() < 4294967296 {
         head = []byte{0xdd, byte(s.Len() >> 24), byte(s.Len() >> 16), byte(s.Len() >> 8), byte(s.Len())}
     } else {
-        return nil, errors.New("out of range")
+        return nil, ErrOutOfRange
     }
     
     body := []byte{}
@@ -256,7 +259,7 @@ func encodeMap(v interface{}) ([]byte, error) {
     } else if m.Len() < 4294967296 {
         head = []byte{0xdf, byte(m.Len() >> 24), byte(m.Len() >> 16), byte(m.Len() >> 8), byte(m.Len())}
     } else {
-        return nil, errors.New("out of range")
+        return nil, ErrOutOfRange
     }
     
     body := []byte{}
