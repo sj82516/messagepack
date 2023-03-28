@@ -22,6 +22,7 @@ func encode(v interface{}) ([]byte, error) {
         encodeInt,
         encodeUint,
         encodeFloat,
+        encodeBin,
         encodeStr,
         encodeArr,
         encodeMap,
@@ -179,6 +180,35 @@ func encodeStr(v interface{}) ([]byte, error) {
     }
     
     return append(head, bytes...), nil
+}
+
+// https://github.com/msgpack/msgpack/blob/master/spec.md#map-format-family
+func encodeBin(v interface{}) ([]byte, error) {
+    if reflect.TypeOf(v).Kind() != reflect.Slice && reflect.TypeOf(v).Kind() != reflect.Array {
+        return nil, nil
+    }
+    // # make sure is byte array
+    if reflect.TypeOf(v).Elem().Kind() != reflect.Uint8 {
+        return nil, nil
+    }
+    
+    s := reflect.ValueOf(v)
+    if s.Len() == 0 {
+        return []byte{0xc4, 0}, nil
+    }
+    
+    head := []byte{}
+    if s.Len() < 256 {
+        head = []byte{0xc4, byte(s.Len())}
+    } else if s.Len() < 65536 {
+        head = []byte{0xc5, byte(s.Len() >> 8), byte(s.Len())}
+    } else if s.Len() < 4294967296 {
+        head = []byte{0xc6, byte(s.Len() >> 24), byte(s.Len() >> 16), byte(s.Len() >> 8), byte(s.Len())}
+    } else {
+        return nil, errors.New("out of range")
+    }
+    
+    return append(head, s.Bytes()...), nil
 }
 
 // https://github.com/msgpack/msgpack/blob/master/spec.md#array-format-family
