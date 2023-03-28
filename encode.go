@@ -7,6 +7,13 @@ import (
     "sort"
 )
 
+const (
+    Max4ByteLen  = 16
+    Max16ByteLen = 65536
+    Max32ByteLen = 4294967296
+    Max64ByteLen = uint(18446744073709551615)
+)
+
 // ErrOutOfRange is returned when the size of value is out of range.
 var ErrOutOfRange = errors.New("out of range")
 
@@ -98,13 +105,13 @@ func encodeUint(v interface{}) ([]byte, error) {
     if uInt < 256 {
         return []byte{0xcc, byte(uInt)}, nil
     }
-    if uInt < 65536 {
+    if uInt < Max16ByteLen {
         return []byte{0xcd, byte(uInt >> 8), byte(uInt)}, nil
     }
-    if uInt < 4294967296 {
+    if uInt < Max32ByteLen {
         return []byte{0xce, byte(uInt >> 24), byte(uInt >> 16), byte(uInt >> 8), byte(uInt)}, nil
     }
-    if uInt <= 18446744073709551615 {
+    if uInt <= Max64ByteLen {
         return []byte{0xcf, byte(uInt >> 56), byte(uInt >> 48), byte(uInt >> 40), byte(uInt >> 32), byte(uInt >> 24), byte(uInt >> 16), byte(uInt >> 8), byte(uInt)}, nil
     }
     
@@ -174,9 +181,9 @@ func encodeStr(v interface{}) ([]byte, error) {
         head = []byte{0xa0 + byte(len(s))}
     } else if len(s) < 256 {
         head = []byte{0xd9, byte(len(s))}
-    } else if len(s) < 65536 {
+    } else if len(s) < Max16ByteLen {
         head = []byte{0xda, byte(len(s) >> 8), byte(len(s))}
-    } else if len(s) < 4294967296 {
+    } else if len(s) < Max32ByteLen {
         head = []byte{0xdb, byte(len(s) >> 24), byte(len(s) >> 16), byte(len(s) >> 8), byte(len(s))}
     } else {
         return nil, ErrOutOfRange
@@ -203,9 +210,9 @@ func encodeBin(v interface{}) ([]byte, error) {
     head := []byte{}
     if s.Len() < 256 {
         head = []byte{0xc4, byte(s.Len())}
-    } else if s.Len() < 65536 {
+    } else if s.Len() < Max16ByteLen {
         head = []byte{0xc5, byte(s.Len() >> 8), byte(s.Len())}
-    } else if s.Len() < 4294967296 {
+    } else if s.Len() < Max32ByteLen {
         head = []byte{0xc6, byte(s.Len() >> 24), byte(s.Len() >> 16), byte(s.Len() >> 8), byte(s.Len())}
     } else {
         return nil, ErrOutOfRange
@@ -222,11 +229,11 @@ func encodeArr(v interface{}) ([]byte, error) {
     
     s := reflect.ValueOf(v)
     head := []byte{}
-    if s.Len() < 16 {
+    if s.Len() < Max4ByteLen {
         head = []byte{0x90 + byte(s.Len())}
-    } else if s.Len() < 65536 {
+    } else if s.Len() < Max16ByteLen {
         head = []byte{0xdc, byte(s.Len() >> 8), byte(s.Len())}
-    } else if s.Len() < 4294967296 {
+    } else if s.Len() < Max32ByteLen {
         head = []byte{0xdd, byte(s.Len() >> 24), byte(s.Len() >> 16), byte(s.Len() >> 8), byte(s.Len())}
     } else {
         return nil, ErrOutOfRange
@@ -252,11 +259,11 @@ func encodeMap(v interface{}) ([]byte, error) {
     
     m := reflect.ValueOf(v)
     head := []byte{}
-    if m.Len() < 16 {
+    if m.Len() < Max4ByteLen {
         head = []byte{0x80 + byte(m.Len())}
-    } else if m.Len() < 65536 {
+    } else if m.Len() < Max16ByteLen {
         head = []byte{0xde, byte(m.Len() >> 8), byte(m.Len())}
-    } else if m.Len() < 4294967296 {
+    } else if m.Len() < Max32ByteLen {
         head = []byte{0xdf, byte(m.Len() >> 24), byte(m.Len() >> 16), byte(m.Len() >> 8), byte(m.Len())}
     } else {
         return nil, ErrOutOfRange
