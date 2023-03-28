@@ -4,6 +4,7 @@ import (
     "errors"
     "math"
     "reflect"
+    "sort"
 )
 
 type encoder func(interface{}) ([]byte, error)
@@ -23,6 +24,7 @@ func encode(v interface{}) ([]byte, error) {
         encodeFloat,
         encodeStr,
         encodeArr,
+        encodeMap,
     }
     
     for _, encoder := range encoderCh {
@@ -200,6 +202,47 @@ func encodeArr(v interface{}) ([]byte, error) {
     body := []byte{}
     for i := 0; i < s.Len(); i++ {
         b, err := encode(s.Index(i).Interface())
+        if err != nil {
+            return nil, err
+        }
+        body = append(body, b...)
+    }
+    
+    return append(head, body...), nil
+}
+
+// https://github.com/msgpack/msgpack/blob/master/spec.md#map-format-family
+func encodeMap(v interface{}) ([]byte, error) {
+    if reflect.TypeOf(v).Kind() != reflect.Map {
+        return nil, nil
+    }
+    
+    m := reflect.ValueOf(v)
+    head := []byte{}
+    if m.Len() < 16 {
+        head = []byte{0x80 + byte(m.Len())}
+    } else if m.Len() < 65536 {
+        head = []byte{0xde, byte(m.Len() >> 8), byte(m.Len())}
+    } else if m.Len() < 4294967296 {
+        head = []byte{0xdf, byte(m.Len() >> 24), byte(m.Len() >> 16), byte(m.Len() >> 8), byte(m.Len())}
+    } else {
+        return nil, errors.New("out of range")
+    }
+    
+    body := []byte{}
+    keys := m.MapKeys()
+    // json key must be string type
+    sort.Slice(keys, func(i, j int) bool {
+        return keys[i].String() < keys[j].String()
+    })
+    for _, key := range keys {
+        b, err := encode(key.Interface())
+        if err != nil {
+            return nil, err
+        }
+        
+        body = append(body, b...)
+        b, err = encode(m.MapIndex(key).Interface())
         if err != nil {
             return nil, err
         }

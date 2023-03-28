@@ -9,8 +9,9 @@ import (
 type testCase struct {
     dest    string
     src     interface{}
-    expFunc func() []byte
+    srcFunc func() interface{}
     exp     []byte
+    expFunc func() []byte
 }
 
 var nilTestCases = []testCase{
@@ -304,6 +305,23 @@ var arrTestCases = []testCase{
         },
     },
 }
+var mapTestCases = []testCase{
+    {
+        dest: "map",
+        src:  map[string]interface{}{},
+        exp:  []byte{0x80},
+    },
+    {
+        dest: "map",
+        src:  map[string]interface{}{"a": 1, "b": 2, "c": 3},
+        exp:  []byte{0x83, 0xa1, 0x61, 0x01, 0xa1, 0x62, 0x02, 0xa1, 0x63, 0x03},
+    },
+    {
+        dest: "map",
+        src:  map[string]interface{}{"a": 1, "b": 2, "c": map[string]interface{}{"d": 4, "e": 5, "f": 6}},
+        exp:  []byte{0x83, 0xa1, 0x61, 0x01, 0xa1, 0x62, 0x02, 0xa1, 0x63, 0x83, 0xa1, 0x64, 0x04, 0xa1, 0x65, 0x05, 0xa1, 0x66, 0x06},
+    },
+}
 
 func TestEncode(t *testing.T) {
     var tests []testCase
@@ -315,9 +333,15 @@ func TestEncode(t *testing.T) {
     tests = append(tests, floatTestCases...)
     tests = append(tests, strTestCases...)
     tests = append(tests, arrTestCases...)
+    tests = append(tests, mapTestCases...)
     
     for _, v := range tests {
-        act, err := Encode(v.src)
+        src := v.src
+        if v.srcFunc != nil {
+            src = v.srcFunc()
+        }
+        
+        act, err := Encode(src)
         exp := v.exp
         if v.expFunc != nil {
             exp = v.expFunc()
@@ -326,7 +350,8 @@ func TestEncode(t *testing.T) {
         if err != nil {
             t.Errorf("Error: %s", err)
         } else if !bytes.Equal(act, exp) {
-            t.Errorf("Expected %v, got %v", exp, act)
+            t.Errorf("Expected %v", exp)
+            t.Errorf("Actual   %v", act)
         }
     }
 }
