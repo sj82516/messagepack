@@ -1,3 +1,5 @@
+// msgpack - Go implementation of MessagePack
+
 package msgpack
 
 import (
